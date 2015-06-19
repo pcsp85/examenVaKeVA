@@ -50,7 +50,7 @@ class Examen
 		$sql = "SHOW TABLES LIKE 'numbers'";
 		$chk = $this->db->query($sql);
 		if($chk->num_rows == 0){
-			$sql =  "CREATE TABLE IF NOT EXISTS `numbers` "
+			$sql =  "CREATE TABLE IF NOT EXISTS `numbers` (`number` int(5), `user_id` varchar(5), `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ) ENGINE = MyISAM;";
 		}
 	}
 
@@ -105,12 +105,28 @@ class Examen
 				$sql = "SELECT * FROM `users` WHERE `FB_id` = $this->user_data->FB_id";
 				$chk = $this->db->query($sql);
 				if($chk->num_rows == 1){
+					//Si ya existe el usuario en la Base de datos local verifica si existen diferencias y actualiza base de datos
 					$user_data_local = $chk->fetch_object();
-					$user_data->'id' = $user_data_local->id;
+					$this->user_data->id = $user_data_local->id;
+					$diff = array_diff_assoc($user_data_local, $this->user_data);
+					if(count($diff)>0){
+						$set = '';
+						foreach ($diff as $key => $value) {
+							$set .= " `$key` = '$value',";
+						}
+						$set = substr($set, 0, -1);
+						$sql = "UPDATE `user` $set WHERE `id` LIKE '$this->user_data->id'";
+						$this->db->query($sql);
+					}
 				}else{
-					$id = $this->createUserId();
-					$sql = "INSERT INTO `users` (`id`, `FB_id`, `name`, `first_name`, `last_name`, `link`, `birthday`, `last_modify`) VALUES ('$id', '$this->user_data->FB_id', '$this->user_data->name', '$this->user_data->first_name', '$this->user_data->last_name', '', '', '')";
+					//Crea el registro del usuario en la Bse de datos
+					$this->user_data->id = $this->createUserId();
+					$sql = "INSERT INTO `users` (`id`, `FB_id`, `name`, `first_name`, `last_name`, `link`, `birthday`, `last_modify`) VALUES ('$this->user_data->id', '$this->user_data->FB_id', '$this->user_data->name', '$this->user_data->first_name', '$this->user_data->last_name', '$this->user_data->link', '$this->user_data->birthday', NOW())";
+					$this->db->query($sql);
 				}
+				//Actualiza campo de de último acceso
+				$sql = "UPDATE `users` SET `last_access` = NOW() WHERE `id` LIKE '$this->user_data->id'";
+				$this->db->query($sql);
 		  } catch(FacebookRequestException $e) {
 		  	$this->errors [] = 'Error: ' . $e->getCode() .' -> '. $e->getMessage();
 		  }
@@ -160,8 +176,11 @@ class Examen
 	 */
 	public function Logout($redirect_uri=null){
 		$this->user_data = null;
+		$_SESSION['examenSession'] = false;
 		session_destroy();
 		if($redirect_uri!=null) header('Location: '.$$redirect_uri);
 	}
+
+
 
 }
