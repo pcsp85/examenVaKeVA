@@ -21,7 +21,7 @@ class Examen
 	 * Inicializaicion del objeto examen 
 	 */
 	public function __construct(){
-		$this->home = 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF'])
+		$this->home = 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']);
 		session_start();
 		require_once('../config/DB.php'); //Datos para conexion DB
 		$this->db = new mysqli(DB_HOST, DB_USER, DB_PSWD, DB_NAME); //Inicializando PDO
@@ -186,11 +186,32 @@ class Examen
 	 * Funcion para agregar registro numérico, realizando las siguentes validaciones:
 	 *   -Usuario logueado
 	 *   -Bloqueo por errores en captura
-	 *   -El valor es numérico
-	 *   -el valor no se encuentra en la DB
+	 *   -Contador de errores (timer)
+	 *   -Es numérico
+	 *   -Se encuentra en la DB
 	 */
 	public function addNumber($n){
-		if
+		if(!$this->isLogedin()) $this->errors[] = 'Acceso negado';
+		$sql = "SELECT * FROM `numbers` WHERE `number` = $n";
+		$chk = $this->db->query($sql);
+		if($chk->numrwos>0) $this->errors[] = 'El numero ya esta registrado en la DB';
+
+		if(count($this->errors)==0){
+			$sql = "INSERT INTO `numbers` (`number`, `user_id`) VALUES ('$n', '$this->user_data->id')";
+			if($this->db->query($sql) !== TRUE) $this->errors[] = 'Ocurrio un erroe al guardar el registro.';
+		}
+
+		if(count($this->errors)>0){
+			$response = array(
+				'result' => 'error',
+				'errors' => $this->errors
+				);
+		}else{
+			$response  = array(
+				'result' => 'success',
+				'messages' => 'el registro se guardo con éxito'
+				);
+		}
 	}
 
 	/**
@@ -198,7 +219,7 @@ class Examen
 	 * Funcion obtiene los registros guardado del usuario actual
 	 */
 	public function getNumbers(){
-		if(!$this->isLogedin) $this->errors[] = 'Acceso negado';
+		if(!$this->isLogedin()) $this->errors[] = 'Acceso negado';
 		else{
 			$id = $this->db->real_escape_string($this->user_data->id);
 			$sql = "SELECT * FROM `numbers` WHERE `user_id` LIKE '$id'";
