@@ -1,0 +1,12 @@
+{
+  "name": "Examen VaKeVa",
+  "description": "Examen técnico de conocimientos",
+  "version": "0.0.0",
+  "homepage": "https://github.com/pcsp85/examenVaKeVa",
+  "license": "GNU",
+  "private": false,
+  "dependencies": {
+    "jquery": "~1.11.2",
+    "bootstrap": "~3.3.4"
+  }
+}
