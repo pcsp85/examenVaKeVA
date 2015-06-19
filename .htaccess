@@ -1,0 +1,6 @@
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+#Tomar en cuenta si la aplicación se ejecutara en la raiz de sitio,
+# Para este caso se considera dentro de la carpeta examenVaKeVa
+RewriteRule ^(.*)$ /examenVaKeVa/index.php?params=$1&%{QUERY_STRING} [NC]

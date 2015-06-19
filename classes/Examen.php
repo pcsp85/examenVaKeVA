@@ -50,7 +50,7 @@ class Examen
 		$sql = "SHOW TABLES LIKE 'numbers'";
 		$chk = $this->db->query($sql);
 		if($chk->num_rows == 0){
-			$sql =  "CREATE TABLE IF NOT EXISTS `numbers` (`number` int(5), `user_id` varchar(5), `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ) ENGINE = MyISAM;";
+			$sql =  "CREATE TABLE IF NOT EXISTS `numbers` (`number` int(5), `user_id` varchar(5), `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, UNIQUE KEY `number` (`number`)) ENGINE = MyISAM;";
 		}
 	}
 
@@ -181,6 +181,39 @@ class Examen
 		if($redirect_uri!=null) header('Location: '.$$redirect_uri);
 	}
 
+	/**
+	 * Function addNumber
+	 * Funcion para agregar registro numérico, realizando las siguentes validaciones:
+	 *   -Usuario logueado
+	 *   -Bloqueo por errores en captura
+	 *   -El valor es numérico
+	 *   -el valor no se encuentra en la DB
+	 */
+	public function addNumber($n){
+		if
+	}
 
+	/**
+	 * Function getNumbers
+	 * Funcion obtiene los registros guardado del usuario actual
+	 */
+	public function getNumbers(){
+		if(!$this->isLogedin) $this->errors[] = 'Acceso negado';
+		else{
+			$id = $this->db->real_escape_string($this->user_data->id);
+			$sql = "SELECT * FROM `numbers` WHERE `user_id` LIKE '$id'";
+			$data_o = $this->db->query($sql);
+			if($data_o->num_rows > 0){
+				$data = array(); $n = 0;
+				while($row = $data_o->fetch_object()){
+					foreach($row as $k => $v){
+						$data[$n][$k] = $v;
+					}
+				}
+				return $data;
+			}
+		}
+		return false;
+	}
 
 }
