@@ -113,7 +113,7 @@ class Examen
 
 		if(count($this->errors)>0){
 			$response .= '<div class="alert alert-box"><ul>';
-			foreach ($this->errors as $k => $e) {
+			foreach ($this->errors as $e) {
 				$response .= '<li>'+$e+'</li>';
 			}
 			$response .= '</ul></div>';
@@ -121,7 +121,7 @@ class Examen
 
 		if(count($this->messages)>0){
 			$response .= '<div class="alert alert-success alert-box"><ul>';
-			foreach ($this->messages as $k => $m) {
+			foreach ($this->messages as $m) {
 				$response .= '<li>'+$m+'</li>';
 			}
 			$response .= '</ul></div>';
@@ -265,8 +265,8 @@ class Examen
 		else{
 			$id = $this->db->real_escape_string($_SESSION['user_data']['id']);
 			$sql = "SELECT * FROM `numbers` WHERE `user_id` LIKE '$id'";
-			$sql .= isset($params['orderby']) ? " ORDER BY `$params[orderby]`" : '';
-			$sql .= isset($params['order']) ? " $params[order]" : '';
+			$sql .= isset($params['orderby']) && $params['orderby']!='' ? " ORDER BY `$params[orderby]`" : '';
+			$sql .= isset($params['order']) && $params['order']!='' ? " $params[order]" : '';
 			$data_o = $this->db->query($sql);
 			if($data_o->num_rows > 0){
 				$data = array(); $n = 0;
@@ -295,5 +295,42 @@ class Examen
 		return $ret;
 	}
 
+	/**
+	 * Function getUsers
+	 * Obtiene listado de usuarios registrados en el sistema
+	 */
+	public function getUsers(){
+		$sql = "SELECT `id`, `name` FROM `users`";
+
+		$data_o = $this->db->query($sql);
+		if($data_o->num_rows>0){
+			$data = array(); $n = 0;
+			while ($row = $data_o->fetch_object()) {
+				foreach ($row as $k => $v) {
+					$data[$n][$k] = $v;
+				}
+				$n++;
+			}
+			return $data;
+		}
+		return false;
+	}
+
+	/**
+	 * Function getUserData
+	 * Obtiene los datos de usuario y cantidad de cifras registradas
+	 */
+	public function getUserData($id){
+		$id = $this->db->real_escape_string($id);
+		$sql = "SELECT * FROM `users` WHERE `id` LIKE '$id'";
+		$data_o = $this->db->query($sql);
+		if($data_o->num_rows==1){
+			$data = $data_o->fetch_object();
+			$sql = "SELECT count('id') as n_cifras FROM `numbers` WHERE `user_id` LIKE '$data->id'";
+			$data->n_cifras = $this->db->query($sql)->fetch_object()->n_cifras;
+			return $data;
+		}
+		return false;
+	}
 
 }

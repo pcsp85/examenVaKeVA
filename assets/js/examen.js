@@ -76,7 +76,7 @@
       document.getElementById('status').innerHTML =
         'Bienvenido ' + response.name + '!';
         response.action = 'login';
-        $.post('ajax.php', response, function (data){
+        $.post(home + '/ajax.php', response, function (data){
         	data = JSON.parse(data);
         	if(data.result == 'success'){
         		if(isLogedin==0){
@@ -93,7 +93,7 @@
 	$('a.logout').click(function (e){
 		e.preventDefault();
 		FB.logout(function (response){
-			$.get('ajax.php',{action:'logout'}, function(data){
+			$.get(home + '/ajax.php',{action:'logout'}, function(data){
 				location.reload(true);
 			});
 		})
@@ -104,11 +104,11 @@ $(document).ready(function (){
 		e.preventDefault();
 		var f = $(this), r = $(this).parent();
 		r.find('.alert').detach();
-		$.post('ajax.php', {action:'addNumber',number:f.find('input[name="number"]').val()}, function (data){
+		$.post(home + '/ajax.php', {action:'addNumber',number:f.find('input[name="number"]').val()}, function (data){
 			data = JSON.parse(data);
 			if(data.result=='success'){
 				r.append('<div class="alert alert-success">'+data.message+'</div>');
-				$.post('ajax.php',{action: 'getNumbers'}, function (data){
+				$.post(home + '/ajax.php',{action: 'getNumbers'}, function (data){
 					$('table.cifras tbody').html($(data).find('tbody').html());
 				});
 			}else if(data.result=='error'){
@@ -123,7 +123,7 @@ $(document).ready(function (){
 			orderby: $(this).attr('data-orderby'),
 			order: $(this).attr('data-order')
 		};
-		$.post('ajax.php',params, function (data){
+		$.post(home + '/ajax.php',params, function (data){
 			$('table.cifras tbody').html($(data).find('tbody').html());
 		});
 	});

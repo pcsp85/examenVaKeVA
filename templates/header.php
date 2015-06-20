@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="<?=$E->home;?>/assets/css/examen.css">
 <script>
 	var isLogedin = <?=abs($E->isLogedin());?>;
+	var home = '<?=$E->home;?>';
 </script>
 </head>
 <body>
