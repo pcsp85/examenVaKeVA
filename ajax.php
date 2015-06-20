@@ -18,10 +18,20 @@ switch ($action) {
 	case 'logout':
 		$E->Logout();
 		$response = 'success';
+		break;
+
+	case 'addNumber':
+		$response = $E->addNumber($number);
+		$json = true;
+		break;
+
+	case 'getNumbers':
+		$response = $E->renderPartial('parts/cifras', false, $E->getNumbers());
+		break;
 
 	default:
 		$response = array(
-			'result' => 'errror',
+			'result' => 'error',
 			'message' => 'Función inválida'
 			);
 		$json=true;

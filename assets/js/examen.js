@@ -98,3 +98,22 @@
 			});
 		})
 	});
+
+$(document).ready(function (){
+	$('form[name="numbers"]').submit(function (e){
+		e.preventDefault();
+		var f = $(this), r = $(this).parent();
+		r.find('.alert').detach();
+		$.post('ajax.php', {action:'addNumber',number:f.find('input[name="number"]').val()}, function (data){
+			data = JSON.parse(data);
+			if(data.result=='success'){
+				r.append('<div class="alert alert-success">'+data.message+'</div>');
+				$.post('ajax.php',{action: 'getNumbers'}, function (data){
+					$('table.cifras tbody').html($(data).find('tbody').html());
+				});
+			}else if(data.result=='error'){
+				r.append('<div class="alert alert-warning">'+data.message+'</div>');
+			}
+		});
+	});
+});

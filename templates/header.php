@@ -1,3 +1,4 @@
+<?php if(!defined('examenTemplate')) die('Acceso negado'); ?>
 <!DOCTYPE html>
 <html>
 <head>

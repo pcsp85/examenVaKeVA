@@ -182,8 +182,9 @@ class Examen
 		//Actualiza campo de de último acceso
 		$sql = "UPDATE `users` SET `last_access` = NOW() WHERE `id` LIKE '$user_data[id]'";
 		$this->db->query($sql);
-		$_SESSION['examenSession'] = 1;
 		$this->user_data = $user_data;
+		$_SESSION['user_data'] = $user_data;
+		$_SESSION['examenSession'] = 1;
 
 		if(count($this->errors)==0) return true;
 		else return false;
@@ -233,24 +234,26 @@ class Examen
 		if(!$this->isLogedin()) $this->errors[] = 'Acceso negado';
 		$sql = "SELECT * FROM `numbers` WHERE `number` = $n";
 		$chk = $this->db->query($sql);
-		if($chk->numrwos>0) $this->errors[] = 'El numero ya esta registrado en la DB';
+		if($chk->num_rows>0) $this->errors[] = 'El numero ya esta registrado en la DB';
 
 		if(count($this->errors)==0){
-			$sql = "INSERT INTO `numbers` (`number`, `user_id`) VALUES ('$n', '$this->user_data->id')";
-			if($this->db->query($sql) !== TRUE) $this->errors[] = 'Ocurrio un erroe al guardar el registro.';
+			$user_id = $this->db->real_escape_string($_SESSION['user_data']['id']);
+			$sql = "INSERT INTO `numbers` (`number`, `user_id`) VALUES ('$n', '$user_id')";
+			if($this->db->query($sql) !== TRUE) $this->errors[] = 'Ocurrio un error al guardar el registro.';
 		}
 
 		if(count($this->errors)>0){
 			$response = array(
 				'result' => 'error',
-				'errors' => $this->errors
+				'message' => $this->toList($this->errors)
 				);
 		}else{
 			$response  = array(
 				'result' => 'success',
-				'messages' => 'el registro se guardo con éxito'
+				'message' => 'el registro se guardo con éxito'
 				);
 		}
+		return $response;
 	}
 
 	/**
@@ -260,7 +263,7 @@ class Examen
 	public function getNumbers(){
 		if(!$this->isLogedin()) $this->errors[] = 'Acceso negado';
 		else{
-			$id = $this->db->real_escape_string($this->user_data->id);
+			$id = $this->db->real_escape_string($_SESSION['user_data']['id']);
 			$sql = "SELECT * FROM `numbers` WHERE `user_id` LIKE '$id'";
 			$data_o = $this->db->query($sql);
 			if($data_o->num_rows > 0){
@@ -269,6 +272,7 @@ class Examen
 					foreach($row as $k => $v){
 						$data[$n][$k] = $v;
 					}
+					$n++;
 				}
 				return $data;
 			}
