@@ -54,7 +54,7 @@ class Examen
 		$sql = "SHOW TABLES LIKE 'users'";
 		$chk = $this->db->query($sql);
 		if($chk->num_rows == 0){
-			$sql = "CREATE TABLE IF NOT EXISTS `users` ( `id` varchar(5) NOT NULL,  `FB_id` int(20) NOT NULL,  `name` varchar(120) NOT NULL,  `first_name` varchar(60) NOT NULL,  `last_name` varchar(60) NOT NULL,  `link` varchar(200) NOT NULL,  `birthday` date NOT NULL,  `last_modify` datetime NOT NULL,  `last_access` datetime NOT NULL,  `block` varchar(15) NOT NULL,  UNIQUE KEY `id` (`id`)) ENGINE=MyISAM;";
+			$sql = "CREATE TABLE IF NOT EXISTS `users` ( `id` varchar(5) NOT NULL,  `FB_id` varchar(20) NOT NULL,  `name` varchar(120) NOT NULL,  `first_name` varchar(60) NOT NULL,  `last_name` varchar(60) NOT NULL, `email` varchar(120) NOT NULL, `gender` varchar(5) NOT NULL,  `link` varchar(200) NOT NULL,  `last_modify` datetime NOT NULL,  `last_access` datetime NOT NULL,  `block` varchar(15) NOT NULL,  UNIQUE KEY `id` (`id`)) ENGINE=MyISAM;";
 			if($this->db->query($sql) === TRUE){
 				$this->messages[] = 'Se creo la tabla de usuarios'; 
 			}
@@ -100,11 +100,11 @@ class Examen
 		$template_path = $this->path . 'templates/' . $template . '.php';
 		$aside_path = $this->path . 'templates/aside/' . $template . '.php';
 
-		$response = $this->renderPartial('header', false, $TB);
+		$response = $this->renderPartial('header', false, $E);
 		$response .= '<div class="row-fluid">';
 		if(is_file($aside_path)){
 			$response .= '<div class="span2 pull-left">';
-			$response .= $this->renderPartial('aside/'.$template, false, $TB);
+			$response .= $this->renderPartial('aside/'.$template, false, $E);
 			$response .= '</div><div class="span10 pull-left">';
 		}else{
 			$response.= '<div class="span12 pull-left">';
@@ -128,13 +128,13 @@ class Examen
 		}
 
 		if(is_file($template_path)){
-			$response .= $this->renderPartial($template, false, $TB); 
+			$response .= $this->renderPartial($template, false, $E); 
 		}else{
-			$response .= $this->renderPartial('error', false, $TB);
+			$response .= $this->renderPartial('error', false, $E);
 		}
 
 		$response .= '</div></div></div>';
-		$response .= $this->renderPartial('footer', false, $TB);
+		$response .= $this->renderPartial('footer', false, $E);
 
 		echo $response;
 	}
@@ -150,51 +150,43 @@ class Examen
 
 	/**
 	 * Function Login
-	 * Inicia la sesión, se utiliza el PHP_SDK descargado de http://github/facebook/facebook-php-sdk-v4 para utilizar FB connect en el registro/Login
+	 * Inicia la sesión, crea el usuario en DB Local o actualiza en caso de diferencias
 	 */
-	public function Login(){
-
-		if($session){
-		  try {
-			$_SESSION['examenSession'] = 1;
-			$user_data =( new FacebookRequest($session, 'GET', '/me'))->execute()->getGraphObject(GraphUser::className());
-			$this->user_data = (object) array(
-				'FB_id'			=> $user_data->getId(),
-				'name'			=> $user_data->getName,
-				'first_name'	=> $user_data->getFirstName,
-				'last_name'		=> $user_data->getLastName,
-				'link'			=> $user_data->getLink,
-				'birthday'		=> $user_data->getBirthday
-				);
-				$sql = "SELECT * FROM `users` WHERE `FB_id` = $this->user_data->FB_id";
-				$chk = $this->db->query($sql);
-				if($chk->num_rows == 1){
-					//Si ya existe el usuario en la Base de datos local verifica si existen diferencias y actualiza base de datos
-					$user_data_local = $chk->fetch_object();
-					$this->user_data->id = $user_data_local->id;
-					$diff = array_diff_assoc($user_data_local, $this->user_data);
-					if(count($diff)>0){
-						$set = '';
-						foreach ($diff as $key => $value) {
-							$set .= " `$key` = '$value',";
-						}
-						$set = substr($set, 0, -1);
-						$sql = "UPDATE `user` $set WHERE `id` LIKE '$this->user_data->id'";
-						$this->db->query($sql);
-					}
-				}else{
-					//Crea el registro del usuario en la Bse de datos
-					$this->user_data->id = $this->createUserId();
-					$sql = "INSERT INTO `users` (`id`, `FB_id`, `name`, `first_name`, `last_name`, `link`, `birthday`, `last_modify`) VALUES ('$this->user_data->id', '$this->user_data->FB_id', '$this->user_data->name', '$this->user_data->first_name', '$this->user_data->last_name', '$this->user_data->link', '$this->user_data->birthday', NOW())";
-					$this->db->query($sql);
+	public function Login($user_data){
+		if($user_data['action']!='login') $this->errors[] = 'Función inválida';
+		$user_data['action'] = false;
+		$sql = "SELECT * FROM `users` WHERE `FB_id` = $user_data[id]";
+		$chk = $this->db->query($sql);
+		if($chk->num_rows == 1){
+			//Si ya existe el usuario en la Base de datos local verifica si existen diferencias y actualiza base de datos
+			$user_data_local = $chk->fetch_assoc();
+			$user_data['id'] = $user_data_local['id'];
+			$user_data['FB_id'] = $user_data_local['FB_id'];
+			$diff = array_diff_assoc($user_data_local, $user_data);
+			if(count($diff)>0){
+				$set = '';
+				foreach ($diff as $key => $value) if($key != 'action'){
+					$set .= " `$key` = '$value',";
 				}
-				//Actualiza campo de de último acceso
-				$sql = "UPDATE `users` SET `last_access` = NOW() WHERE `id` LIKE '$this->user_data->id'";
-				$this->db->query($sql);
-		  } catch(FacebookRequestException $e) {
-		  	$this->errors [] = 'Error: ' . $e->getCode() .' -> '. $e->getMessage();
-		  }
+				$set = substr($set, 0, -1);
+				$sql = "UPDATE `user` $set WHERE `id` LIKE '$user_data[id]'";
+				if($set!='') $this->db->query($sql);
+			}
+		}else{
+			//Crea el registro del usuario en la Bse de datos
+			$user_data['FB_id'] = $user_data['id'];
+			$user_data['id'] = $this->createUserId();
+			$sql = "INSERT INTO `users` (`id`, `FB_id`, `name`, `first_name`, `last_name`, `email`, `gender`, `link`, `last_modify`) VALUES ('$user_data[id]', '$user_data[FB_id]', '$user_data[name]', '$user_data[first_name]', '$user_data[last_name]', '$user_data[email]', '$user_data[gender]', '$user_data[link]', NOW())";
+			$this->db->query($sql);
 		}
+		//Actualiza campo de de último acceso
+		$sql = "UPDATE `users` SET `last_access` = NOW() WHERE `id` LIKE '$user_data[id]'";
+		$this->db->query($sql);
+		$_SESSION['examenSession'] = 1;
+		$this->user_data = $user_data;
+
+		if(count($this->errors)==0) return true;
+		else return false;
 	}
 
 	/**
@@ -211,7 +203,7 @@ class Examen
 				$id .= substr($chars, $pos, 1);
 			}
 			$sql = "SELECT `id` FROM `users` WHERE `id` LIKE  '$id'";
-			$chk = $this->db->query();
+			$chk = $this->db->query($sql);
 		} while ($chk->num_rows==1);
 
 		return $id;
@@ -283,5 +275,19 @@ class Examen
 		}
 		return false;
 	}
+
+	/**
+	 * Funtion toList
+	 * Retorna un array en HTML de lista desordenada
+	 */
+	public function toList($array){
+		$ret = '<ul>';
+		foreach($array as $k => $v){
+			$ret .= '<li>' . $v . '</li>';
+		}
+		$ret .= '</ul>';
+		return $ret;
+	}
+
 
 }

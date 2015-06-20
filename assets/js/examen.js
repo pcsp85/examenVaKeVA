@@ -1,0 +1,2 @@
+/* Script par Examen Técnico */
+

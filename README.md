@@ -34,13 +34,12 @@ Será tomado en cuenta, por un lado, el avance que tenga el repositorio tras las
 ##Componentes
 * Framework HTML5 -> Boostrap 3.3.5
 * Librería JS -> jQuery 1.11.3
-* FB Connect -> FACEBOOK_PHP_SDK_V4-4.0
+* FB Connect -> FACEBOOK_JavaScript_PHP_SDK
 * DB -> PDO MySQL
 
 ##Reproducción del Proyecto
 1. Clonar el repositorio en alguna carpeta ejecutada por APACHE
 2. Editar el fichero config/DB.php con los valores para la base de datos
-3. Editar el fichero config/FB.php con los datos obtenidos en Faccebook Develop
 4. Editar el fichero .htaccess para el correcto funcionamiento de las rutas comodas
 5. Abrir el proyecto en algun navegador
 
