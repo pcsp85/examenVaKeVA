@@ -260,11 +260,13 @@ class Examen
 	 * Function getNumbers
 	 * Funcion obtiene los registros guardado del usuario actual
 	 */
-	public function getNumbers(){
+	public function getNumbers($params=null){
 		if(!$this->isLogedin()) $this->errors[] = 'Acceso negado';
 		else{
 			$id = $this->db->real_escape_string($_SESSION['user_data']['id']);
 			$sql = "SELECT * FROM `numbers` WHERE `user_id` LIKE '$id'";
+			$sql .= isset($params['orderby']) ? " ORDER BY `$params[orderby]`" : '';
+			$sql .= isset($params['order']) ? " $params[order]" : '';
 			$data_o = $this->db->query($sql);
 			if($data_o->num_rows > 0){
 				$data = array(); $n = 0;

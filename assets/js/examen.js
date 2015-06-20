@@ -116,4 +116,16 @@ $(document).ready(function (){
 			}
 		});
 	});
+
+	$('.cifras thead th i').click(function (){
+		var params = {
+			action: 'getNumbers',
+			orderby: $(this).attr('data-orderby'),
+			order: $(this).attr('data-order')
+		};
+		$.post('ajax.php',params, function (data){
+			$('table.cifras tbody').html($(data).find('tbody').html());
+		});
+	});
+
 });

@@ -19,3 +19,13 @@ body>.container .well h2{
 body>.container .well h3{
 	margin-top: 0;
 }
+
+body>.container .cifras thead th{
+	text-align: center;
+	min-width: 6em;
+}
+body>.container .cifras thead th i{
+	cursor: pointer;
+	float: right;
+	margin: .2em .1em;
+}

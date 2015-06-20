@@ -26,7 +26,11 @@ switch ($action) {
 		break;
 
 	case 'getNumbers':
-		$response = $E->renderPartial('parts/cifras', false, $E->getNumbers());
+		$params = array(
+			'orderby' => isset($orderby) ? $orderby : false,
+			'order' => isset($order) ? $order : false
+			);
+		$response = $E->renderPartial('parts/cifras', false, $E->getNumbers($params));
 		break;
 
 	default:
