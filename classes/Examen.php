@@ -9,6 +9,8 @@ class Examen
 {
 	public $home		= '';		//@String URL del home
 
+	public $path 		= '';		//@String Ruta del directorio de la aplicacion
+
 	public $errors		= array();	//@Array Errores
 
 	public $messages	= array();	//@Array Mensajes
@@ -20,17 +22,28 @@ class Examen
 	 * Function __construct
 	 * Inicializaicion del objeto examen 
 	 */
-	public function __construct(){
-		$this->home = 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']);
+	public function __construct($isHome=false){
+		define('examenTemplate', 1);
 		session_start();
-		require_once('../config/DB.php'); //Datos para conexion DB
+		$this->home = 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']);
+		$this->path = dirname(__FILE__) . '/../';
+		require_once($this->path . 'config/DB.php'); //Datos para conexion DB
 		$this->db = new mysqli(DB_HOST, DB_USER, DB_PSWD, DB_NAME); //Inicializando PDO
-		if($this->db->connect_errorno){
+		if($this->db->connect_errno){
 			$this->errors[] = 'Error al establecer la conexion con la Base de Datos';
 		}
 
 		$this->install();
-
+		if($isHome==true){
+			if(!$this->isLogedin()){
+				$this->renderPartial('header', true, $this);
+				$this->renderPartial('login', true, $this);
+	            $this->renderPartial('footer', true, $this);
+			}else{
+	            $this->params = isset($_GET['params']) ? explode('/', $_GET['params']) : array(0=>'index');
+	            $this->render($this->params[0], $this);
+			}
+		}
 	}
 
 	/**
@@ -50,8 +63,80 @@ class Examen
 		$sql = "SHOW TABLES LIKE 'numbers'";
 		$chk = $this->db->query($sql);
 		if($chk->num_rows == 0){
-			$sql =  "CREATE TABLE IF NOT EXISTS `numbers` (`number` int(5), `user_id` varchar(5), `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, UNIQUE KEY `number` (`number`)) ENGINE = MyISAM;";
+			$sql =  "CREATE TABLE IF NOT EXISTS `numbers` (`number` int(5), `user_id` varchar(5), `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, UNIQUE KEY `number` (`number`)) ENGINE = MyISAM";
+			if($this->db->query($sql) === TRUE){
+				$this->messages[] = 'Se creo la tabla para el regustro de números';
+			}
 		}
+	}
+
+	/**
+	 * Function renderPartial
+	 * Genera HTML de la vista de una plantilla parcialmente
+	 */
+	public function renderPartial($template, $echo=true, $E=null){
+		$template_path = $this->path . 'templates/' . $template .'.php';
+		$response = '';
+		if(is_file($template_path)){
+			ob_start();
+			include($template_path);
+			$response = ob_get_contents();
+			ob_end_clean();
+			if($echo == true){
+				echo $response;
+			}else{
+				return $response;
+			}
+		}else{
+			return 'false';
+		}
+	}
+
+	/**
+	 * Function render
+	 * Genera HTML total de una pagina
+	 */
+	public function render($template, $E=null){
+		$template_path = $this->path . 'templates/' . $template . '.php';
+		$aside_path = $this->path . 'templates/aside/' . $template . '.php';
+
+		$response = $this->renderPartial('header', false, $TB);
+		$response .= '<div class="row-fluid">';
+		if(is_file($aside_path)){
+			$response .= '<div class="span2 pull-left">';
+			$response .= $this->renderPartial('aside/'.$template, false, $TB);
+			$response .= '</div><div class="span10 pull-left">';
+		}else{
+			$response.= '<div class="span12 pull-left">';
+		}
+		$response .= '<div class="well">';
+
+		if(count($this->errors)>0){
+			$response .= '<div class="alert alert-box"><ul>';
+			foreach ($this->errors as $k => $e) {
+				$response .= '<li>'+$e+'</li>';
+			}
+			$response .= '</ul></div>';
+		}
+
+		if(count($this->messages)>0){
+			$response .= '<div class="alert alert-success alert-box"><ul>';
+			foreach ($this->messages as $k => $m) {
+				$response .= '<li>'+$m+'</li>';
+			}
+			$response .= '</ul></div>';
+		}
+
+		if(is_file($template_path)){
+			$response .= $this->renderPartial($template, false, $TB); 
+		}else{
+			$response .= $this->renderPartial('error', false, $TB);
+		}
+
+		$response .= '</div></div></div>';
+		$response .= $this->renderPartial('footer', false, $TB);
+
+		echo $response;
 	}
 
 	/**
@@ -68,27 +153,6 @@ class Examen
 	 * Inicia la sesión, se utiliza el PHP_SDK descargado de http://github/facebook/facebook-php-sdk-v4 para utilizar FB connect en el registro/Login
 	 */
 	public function Login(){
-		require_once('../config/FB.php') //Datos para inicializacion de Facebook SDK
-		define('FACEBOOK_SDK_V4_SRC_DIR', 'facebook-php-sdk-v4-4.0-dev/src/Facebook/');
-		require __DIR__ . '/facebook-php-sdk-v4-4.0-dev/autoload.php';
-
-		use Facebook\FacebookSession;
-		use Facebook\FacebookRedirectLoginHelper;
-		use Facebook\FacebookRequest;
-		use Facebook\GraphUser;
-		use Facebook\FacebookRequestException;
-
-		FacebookSession::setDefaultApplication(FB_APP_ID, FB_APP_SECRET);
-
-		$helper =  new FacebookRedirectLoginHelper($this->home);
-
-		try {
-			$session = $helper->getSessionFromRedirect();
-		} catch(FacebookRequestException $ex) {
-			$this->errors [] = 'Error: ' . $ex->getCode() .' -> '. $ex->getMessage();
-		} catch(\Exception $ex){
-			$this->errors [] = "Error al iniciar sesión";
-		}
 
 		if($session){
 		  try {
@@ -142,7 +206,7 @@ class Examen
 		$chars = 'ABCDEFGHIJKLMOPQRSTUVXWYZ0123456789';
 		do {
 			$id = '';
-			for ($i=0,$i<5;$i++){
+			for ($i=0;$i<5;$i++){
 				$pos = rand(0, strlen($chars)-1);
 				$id .= substr($chars, $pos, 1);
 			}
@@ -151,23 +215,6 @@ class Examen
 		} while ($chk->num_rows==1);
 
 		return $id;
-	}
-
-	/**
-	 * Function LoginUrl
-	 * Retorna la url para el acceso mediante FB connect
-	 */
-
-	public function LoginUrl(){
-		require_once('../config/FB.php') //Datos para inicializacion de Facebook SDK
-		define('FACEBOOK_SDK_V4_SRC_DIR', 'facebook-php-sdk-v4-4.0-dev/src/Facebook/');
-		require __DIR__ . '/facebook-php-sdk-v4-4.0-dev/autoload.php';
-
-		use Facebook\FacebookSession;
-		use Facebook\FacebookRedirectLoginHelper;
-
-		$helper = new FacebookRedirectLoginHelper($this->home);
-		return $helper->getLoginUrl();
 	}
 
 	/**
