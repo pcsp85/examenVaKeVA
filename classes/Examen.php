@@ -191,6 +191,17 @@ class Examen
 	}
 
 	/**
+	 * Function imageProfile
+	 * Guarda la imagen obtenida de FB connect en la ubicación local
+	 */
+	public function imageProfile(){
+		if($_FILES['image']['tmp_name']){
+			move_uploaded_file($_FILES['image']['tmp_name'], $this->path.'assets/img/profiles/'.$_FILES['image']['name']);
+		}
+		return false;
+	}
+
+	/**
 	 * Function createUserId
 	 * Retorna un identificador único, generado aleatoriamente, 5 caracteres alfanumericos.
 	 * Verifica que no se encuentre registrado en la base de datos

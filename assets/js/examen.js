@@ -80,8 +80,27 @@
         	data = JSON.parse(data);
         	if(data.result == 'success'){
         		if(isLogedin==0){
-        			isLogedin = 1;
-        			location.reload(true);
+					isLogedin = 1;
+					location.reload(true);
+      			FB.api('/me/picture', function(response){
+        				var img = document.createElement('img');
+        				img.src = response.data.url;
+        				var f = new FormData();
+        				f.append('action','imageProfile');
+        				f.append('image', img);
+        				$.ajax({
+        					url: home + '/ajax.php',
+        					data: f,
+        					cache: false,
+        					contentType: false,
+        					processData: false,
+        					type: 'POST',
+        					success: function (data){
+        						console.log(data);
+        					}
+        				});
+	        			     				
+        			});
         		}
         	}else if(data.result == 'error'){
         		document.getElementById('status').innerHTML += data.messages;

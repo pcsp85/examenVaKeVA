@@ -33,6 +33,10 @@ switch ($action) {
 		$response = $E->renderPartial('parts/cifras', false, $E->getNumbers($params));
 		break;
 
+	case 'imageProfile':
+		$response = !$E->imageProfile() ? 'error' : 'success';
+		break;
+
 	default:
 		$response = array(
 			'result' => 'error',
