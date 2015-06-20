@@ -1,5 +1,7 @@
 /* Hoja de estilos para Examen Técnico */
-
+body>.container{
+	margin-top: 71px;
+}
 .login{
     max-width: 500px;
     padding: 19px 29px 29px;

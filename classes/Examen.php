@@ -101,13 +101,13 @@ class Examen
 		$aside_path = $this->path . 'templates/aside/' . $template . '.php';
 
 		$response = $this->renderPartial('header', false, $E);
-		$response .= '<div class="row-fluid">';
+		$response .= '<div class="row">';
 		if(is_file($aside_path)){
-			$response .= '<div class="span2 pull-left">';
+			$response .= '<div class="col-sm-3 pull-left">';
 			$response .= $this->renderPartial('aside/'.$template, false, $E);
-			$response .= '</div><div class="span10 pull-left">';
+			$response .= '</div><div class="col-sm-9 pull-left">';
 		}else{
-			$response.= '<div class="span12 pull-left">';
+			$response.= '<div class="col-sm-12 pull-left">';
 		}
 		$response .= '<div class="well">';
 

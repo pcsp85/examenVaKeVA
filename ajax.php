@@ -2,6 +2,7 @@
 require_once('classes/Examen.php');
 $E = new Examen();
 
+$json = false;
 if(isset($_GET)) extract($_GET);
 if(isset($_POST)) extract($_POST);
 
@@ -14,6 +15,10 @@ switch ($action) {
 		$json=true;
 		break;
 	
+	case 'logout':
+		$E->Logout();
+		$response = 'success';
+
 	default:
 		$response = array(
 			'result' => 'errror',
